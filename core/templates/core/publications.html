@@ -1,0 +1,143 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📚 Publications</h2>
+    <a href="{% url 'upload_publication' %}" class="btn btn-primary">
+        <i class="bi bi-plus-circle"></i> Upload New
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card shadow mb-4">
+    <div class="card-header bg-white fw-bold">🔍 Filter Publications</div>
+    <div class="card-body">
+        <form method="get">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <input type="text" name="search" class="form-control"
+                        placeholder="Search title / faculty..."
+                        value="{{ filters.search }}">
+                </div>
+                <div class="col-md-2">
+                    <select name="type" class="form-control">
+                        <option value="">All Types</option>
+                        <option value="journal" {% if filters.type == 'journal' %}selected{% endif %}>Journal</option>
+                        <option value="conference" {% if filters.type == 'conference' %}selected{% endif %}>Conference</option>
+                        <option value="book" {% if filters.type == 'book' %}selected{% endif %}>Book</option>
+                        <option value="book_chapter" {% if filters.type == 'book_chapter' %}selected{% endif %}>Book Chapter</option>
+                    </select>
+                </div>
+                {% if user.is_superuser %}
+                <div class="col-md-2">
+                    <select name="faculty" class="form-control">
+                        <option value="">All Faculty</option>
+                        {% for f in faculties %}
+                        <option value="{{ f.id }}" {% if filters.faculty == f.id|stringformat:'s' %}selected{% endif %}>
+                            {{ f.name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="department" class="form-control">
+                        <option value="">All Departments</option>
+                        <option value="cs">Computer Science</option>
+                        <option value="ec">Electronics</option>
+                        <option value="me">Mechanical</option>
+                        <option value="ce">Civil</option>
+                        <option value="it">Information Technology</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="designation" class="form-control">
+                        <option value="">All Designations</option>
+                        <option value="professor">Professor</option>
+                        <option value="associate_professor">Associate Professor</option>
+                        <option value="assistant_professor">Assistant Professor</option>
+                        <option value="lecturer">Lecturer</option>
+                    </select>
+                </div>
+                {% endif %}
+                <div class="col-md-2">
+                    <select name="year" class="form-control">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if filters.year == y|stringformat:'s' %}selected{% endif %}>
+                            {{ y }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <select name="month" class="form-control">
+                        <option value="">All Months</option>
+                        <option value="1">January</option>
+                        <option value="2">February</option>
+                        <option value="3">March</option>
+                        <option value="4">April</option>
+                        <option value="5">May</option>
+                        <option value="6">June</option>
+                        <option value="7">July</option>
+                        <option value="8">August</option>
+                        <option value="9">September</option>
+                        <option value="10">October</option>
+                        <option value="11">November</option>
+                        <option value="12">December</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-primary w-100">Filter</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{% url 'publication_list' %}" class="btn btn-outline-secondary w-100">Clear</a>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Results -->
+<div class="card shadow">
+    <div class="card-body">
+        <p class="text-muted">Showing {{ publications.count }} result(s)</p>
+        <table class="table table-hover">
+            <thead class="table-primary">
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Faculty</th>
+                    <th>Department</th>
+                    <th>Month/Year</th>
+                    <th>PDF</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pub in publications %}
+                <tr>
+                    <td>{{ pub.title }}</td>
+                    <td><span class="badge bg-primary">{{ pub.get_type_display }}</span></td>
+                    <td>{{ pub.faculty.name }}</td>
+                    <td>{{ pub.faculty.get_department_display }}</td>
+                    <td>{{ pub.get_month_display }} {{ pub.year }}</td>
+                    <td>
+                        {% if pub.pdf_file %}
+                        <a href="{{ pub.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                            <i class="bi bi-file-pdf"></i> View
+                        </a>
+                        {% else %}
+                        <span class="text-muted">—</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center text-muted py-4">
+                        No publications found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
