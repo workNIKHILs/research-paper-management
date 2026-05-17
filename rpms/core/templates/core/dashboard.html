@@ -1,0 +1,225 @@
+{% extends 'core/base.html' %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Total Publications</div>
+                        <div class="stat-value">{{ total }}</div>
+                    </div>
+                    <div class="stat-icon" style="background:#e0e7ff;color:#3730a3;">
+                        <i class="bi bi-journal-richtext"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">SCOPUS</div>
+                        <div class="stat-value">{{ scopus_count }}</div>
+                    </div>
+                    <div class="stat-icon" style="background:#dbeafe;color:#1e40af;">
+                        <i class="bi bi-bookmark-check"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">WOS</div>
+                        <div class="stat-value">{{ wos_count }}</div>
+                    </div>
+                    <div class="stat-icon" style="background:#d1fae5;color:#065f46;">
+                        <i class="bi bi-bookmark-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">WOS-SCI</div>
+                        <div class="stat-value">{{ wos_sci_count }}</div>
+                    </div>
+                    <div class="stat-icon" style="background:#ede9fe;color:#5b21b6;">
+                        <i class="bi bi-award"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl col-md-4 col-sm-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">WOS-ESCI</div>
+                        <div class="stat-value">{{ wos_esci_count }}</div>
+                    </div>
+                    <div class="stat-icon" style="background:#ffedd5;color:#9a3412;">
+                        <i class="bi bi-star"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-3 mb-4">
+    <div class="col-lg-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-bar-chart me-2"></i>Publications by Year</h6>
+                <canvas id="yearChart" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <h6 class="fw-semibold mb-3"><i class="bi bi-people me-2"></i>Publications per Faculty</h6>
+                <canvas id="facultyChart" height="260"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Publications -->
+<div class="card stat-card bg-white">
+    <div class="card-body">
+        <h6 class="fw-semibold mb-3"><i class="bi bi-clock-history me-2"></i>Recent Publications</h6>
+        <div class="table-responsive">
+            <table class="table table-clean mb-0">
+                <thead>
+                    <tr>
+                        <th>SL.NO</th>
+                        <th>Faculty</th>
+                        <th>Title</th>
+                        <th>Year</th>
+                        <th>Indexed</th>
+                        <th>DOI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pub in recent %}
+                    <tr>
+                        <td>{{ pub.sl_no }}</td>
+                        <td>{{ pub.faculty_name }}</td>
+                        <td>{{ pub.title|truncatewords:12 }}</td>
+                        <td>{{ pub.year }}</td>
+                        <td>
+                            {% if pub.indexed == 'SCOPUS' %}
+                                <span class="badge badge-scopus">SCOPUS</span>
+                            {% elif pub.indexed == 'WOS' %}
+                                <span class="badge badge-wos">WOS</span>
+                            {% elif pub.indexed == 'WOS-SCI' %}
+                                <span class="badge badge-wos-sci">WOS-SCI</span>
+                            {% elif pub.indexed == 'WOS-ESCI' %}
+                                <span class="badge badge-wos-esci">WOS-ESCI</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pub.doi %}
+                            <a href="{{ pub.doi_url }}" target="_blank" class="text-decoration-none small">
+                                <i class="bi bi-link-45deg"></i> Link
+                            </a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center text-muted py-4">
+                            <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                            <p class="mb-0 mt-2">No publications yet. Upload your first publication!</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ year_labels|json_script:"yearLabelsData" }}
+{{ year_counts|json_script:"yearCountsData" }}
+{{ faculty_labels|json_script:"facultyLabelsData" }}
+{{ faculty_counts|json_script:"facultyCountsData" }}
+<script>
+// Year Chart
+const yearCtx = document.getElementById('yearChart');
+if (yearCtx) {
+    new Chart(yearCtx, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse(document.getElementById('yearLabelsData').textContent),
+            datasets: [{
+                label: 'Publications',
+                data: JSON.parse(document.getElementById('yearCountsData').textContent),
+                backgroundColor: 'rgba(15, 32, 39, 0.75)',
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } },
+                x: { grid: { display: false } }
+            }
+        }
+    });
+}
+
+// Faculty Chart
+const facCtx = document.getElementById('facultyChart');
+if (facCtx) {
+    new Chart(facCtx, {
+        type: 'bar',
+        data: {
+            labels: JSON.parse(document.getElementById('facultyLabelsData').textContent),
+            datasets: [{
+                label: 'Publications',
+                data: JSON.parse(document.getElementById('facultyCountsData').textContent),
+                backgroundColor: 'rgba(30, 64, 175, 0.7)',
+                borderRadius: 6,
+                borderSkipped: false,
+            }]
+        },
+        options: {
+            indexAxis: 'y',
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                x: { beginAtZero: true, ticks: { stepSize: 1 } },
+                y: { grid: { display: false } }
+            }
+        }
+    });
+}
+</script>
+{% endblock %}

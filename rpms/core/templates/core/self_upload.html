@@ -1,0 +1,125 @@
+{% extends 'core/base.html' %}
+
+{% block page_title %}Add Publication{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card stat-card bg-white">
+            <div class="card-body p-4">
+                <h5 class="fw-semibold mb-1">
+                    <i class="bi bi-plus-circle me-2"></i>Add Publication
+                </h5>
+                <p class="text-muted small mb-4">
+                    Manually add a single publication. Uploading as:
+                    <strong>{{ faculty.name }}</strong>
+                </p>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Title -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">
+                            Title of Paper <span class="text-danger">*</span>
+                        </label>
+                        {{ form.title }}
+                        {% for error in form.title.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Type & Year -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">
+                                Publication Type <span class="text-danger">*</span>
+                            </label>
+                            {{ form.type }}
+                            {% for error in form.type.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">
+                                Year <span class="text-danger">*</span>
+                            </label>
+                            {{ form.year }}
+                            {% for error in form.year.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <!-- Journal/Conference -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">
+                            Journal / Conference Name <span class="text-danger">*</span>
+                        </label>
+                        {{ form.journal_conference }}
+                        {% for error in form.journal_conference.errors %}
+                        <div class="text-danger small mt-1">{{ error }}</div>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Page No & Vol/Issue -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Page No</label>
+                            {{ form.page_no }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Vol.No / Issue No</label>
+                            {{ form.vol_issue }}
+                        </div>
+                    </div>
+
+                    <!-- DOI -->
+                    <div class="mb-3">
+                        <label class="form-label small fw-semibold">DOI</label>
+                        {{ form.doi }}
+                        <small class="text-muted">Enter DOI without the https://doi.org/ prefix</small>
+                    </div>
+
+                    <!-- Indexed & Quartile -->
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">
+                                Indexed In <span class="text-danger">*</span>
+                            </label>
+                            {{ form.indexed }}
+                            {% for error in form.indexed.errors %}
+                            <div class="text-danger small mt-1">{{ error }}</div>
+                            {% endfor %}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Quartile</label>
+                            {{ form.quartile }}
+                        </div>
+                    </div>
+
+                    <!-- PDF Upload -->
+                    <div class="mb-4">
+                        <label class="form-label small fw-semibold">
+                            <i class="bi bi-file-pdf me-1"></i>PDF File
+                        </label>
+                        {{ form.pdf_file }}
+                        <small class="text-muted">Optional. Upload the publication PDF.</small>
+                    </div>
+
+                    <hr>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-circle me-1"></i> Save Publication
+                        </button>
+                        <a href="{% url 'publication_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

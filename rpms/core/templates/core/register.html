@@ -1,0 +1,59 @@
+{% extends 'core/base.html' %}
+
+{% block auth_content %}
+<div class="card shadow-lg" style="width:420px;max-width:90vw;border:none;border-radius:16px;">
+    <div class="card-body p-4">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                 style="width:56px;height:56px;background:#d1fae5;">
+                <i class="bi bi-person-plus-fill" style="font-size:1.5rem;color:#065f46;"></i>
+            </div>
+            <h5 class="fw-bold mb-1">Create Account</h5>
+            <p class="text-muted small">Join the Research Publication Management System</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Faculty Name</label>
+                {{ form.name }}
+                <small class="text-muted">Your full name as it appears in publications.</small>
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Username</label>
+                {{ form.username }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Password</label>
+                {{ form.password1 }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Confirm Password</label>
+                {{ form.password2 }}
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">
+                {% for field in form %}
+                    {% for error in field.errors %}
+                    <div>{{ error }}</div>
+                    {% endfor %}
+                {% endfor %}
+                {% for error in form.non_field_errors %}
+                <div>{{ error }}</div>
+                {% endfor %}
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-success w-100 mb-3">
+                <i class="bi bi-person-plus me-1"></i> Register
+            </button>
+
+            <p class="text-center text-muted small mb-0">
+                Already have an account?
+                <a href="{% url 'login' %}" class="text-decoration-none fw-semibold">Sign In</a>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

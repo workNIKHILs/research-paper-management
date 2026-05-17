@@ -1,0 +1,128 @@
+{% extends 'core/base.html' %}
+
+{% block page_title %}Upload Publications{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        {% if not show_preview %}
+        <!-- Upload Form -->
+        <div class="card stat-card bg-white">
+            <div class="card-body p-4">
+                <h5 class="fw-semibold mb-1"><i class="bi bi-cloud-upload me-2"></i>Upload Publications</h5>
+                <p class="text-muted small mb-4">Upload an Excel (.xlsx) file with your publication data.</p>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="border border-2 border-dashed rounded-3 p-5 text-center mb-3" id="dropZone"
+                         style="border-color:#d1d5db; cursor:pointer;" onclick="document.getElementById('id_file').click();">
+                        <i class="bi bi-file-earmark-spreadsheet" style="font-size:3rem;color:#6b7280;"></i>
+                        <h6 class="mt-3 mb-1">Click to select your Excel file</h6>
+                        <p class="text-muted small mb-2">Only .xlsx files are accepted</p>
+                        <p class="text-muted small mb-0" id="fileName"></p>
+                        <input type="file" name="file" id="id_file" class="d-none" accept=".xlsx"
+                               onchange="document.getElementById('fileName').textContent = this.files[0] ? this.files[0].name : '';">
+                    </div>
+
+                    <div class="alert alert-info small py-2">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>Excel Format:</strong> Row 1 = Title/Header text, Row 2 = Column Headers, Row 3+ = Data
+                    </div>
+
+                    {% for error in form.file.errors %}
+                    <div class="alert alert-danger small py-2">{{ error }}</div>
+                    {% endfor %}
+
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-upload me-1"></i> Upload & Preview
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        {% else %}
+        <!-- Preview & Column Mapping -->
+        <div class="card stat-card bg-white mb-4">
+            <div class="card-body">
+                <h5 class="fw-semibold mb-1"><i class="bi bi-table me-2"></i>Preview — First 5 Rows</h5>
+                <p class="text-muted small mb-3">{{ total_rows }} total rows detected in your file.</p>
+                <div class="table-responsive">
+                    <table class="table table-sm table-bordered mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                {% for h in headers %}
+                                <th class="small">{{ h }}</th>
+                                {% endfor %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for row in preview %}
+                            <tr>
+                                {% for cell in row %}
+                                <td class="small">{{ cell|truncatewords:8 }}</td>
+                                {% endfor %}
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Column Mapping -->
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <h5 class="fw-semibold mb-1"><i class="bi bi-diagram-3 me-2"></i>Map Columns</h5>
+                <p class="text-muted small mb-3">Map each system field to the corresponding Excel column.</p>
+
+                <form method="post" action="{% url 'upload_confirm' %}">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        {% for field in system_fields %}
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">
+                                {{ system_field_labels|default_if_none:"" }}
+                                {% for k, v in system_field_labels.items %}
+                                    {% if k == field %}{{ v }}{% endif %}
+                                {% endfor %}
+                            </label>
+                            <select name="map_{{ field }}" class="form-select form-select-sm">
+                                <option value="">— Skip —</option>
+                                {% for h in headers %}
+                                <option value="{{ forloop.counter0 }}"
+                                    {% if field == 'faculty_name' and 'name' in h|lower or field == 'faculty_name' and 'faculty' in h|lower %}selected
+                                    {% elif field == 'title' and 'title' in h|lower %}selected
+                                    {% elif field == 'type' and 'type' in h|lower %}selected
+                                    {% elif field == 'journal_conference' and 'journal' in h|lower or field == 'journal_conference' and 'conference' in h|lower %}selected
+                                    {% elif field == 'page_no' and 'page' in h|lower %}selected
+                                    {% elif field == 'vol_issue' and 'vol' in h|lower %}selected
+                                    {% elif field == 'year' and 'year' in h|lower %}selected
+                                    {% elif field == 'doi' and 'doi' in h|lower %}selected
+                                    {% elif field == 'indexed' and 'index' in h|lower %}selected
+                                    {% elif field == 'quartile' and 'quartile' in h|lower or field == 'quartile' and 'q1' in h|lower %}selected
+                                    {% endif %}
+                                >{{ h }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        {% endfor %}
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-check-circle me-1"></i> Confirm & Import {{ total_rows }} Records
+                        </button>
+                        <a href="{% url 'upload_publication' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        {% endif %}
+
+    </div>
+</div>
+{% endblock %}

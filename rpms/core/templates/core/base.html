@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Research Publication Management System</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --sidebar-bg: rgba(15, 23, 42, 0.95);
+            --sidebar-hover: rgba(255, 255, 255, 0.1);
+            --bg-color: #f8fafc;
+            --card-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            --card-hover-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+        }
+        
+        * { font-family: 'Inter', sans-serif; }
+        h1, h2, h3, h4, h5, h6, .brand h5, .page-title, .stat-value { font-family: 'Outfit', sans-serif; }
+        
+        body { 
+            background-color: var(--bg-color); 
+            background-image: radial-gradient(at 40% 20%, hsla(220,100%,74%,0.1) 0px, transparent 50%),
+                              radial-gradient(at 80% 0%, hsla(189,100%,56%,0.1) 0px, transparent 50%),
+                              radial-gradient(at 0% 50%, hsla(355,100%,93%,0.1) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: #334155;
+        }
+
+        /* Sidebar Glassmorphism */
+        .sidebar {
+            position: fixed; top: 0; left: 0;
+            width: 260px; height: 100vh;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-right: 1px solid rgba(255,255,255,0.05);
+            z-index: 1040; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-y: auto;
+            box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+        }
+        .sidebar .brand {
+            padding: 1.5rem 1.25rem;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            display: flex; flex-direction: column; gap: 4px;
+        }
+        .sidebar .brand h5 { color: #fff; font-weight: 700; font-size: 1.25rem; margin: 0; letter-spacing: 0.5px;}
+        .sidebar .brand small { color: rgba(255,255,255,0.6); font-size: 0.75rem; letter-spacing: 0.2px;}
+        
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.7);
+            padding: 0.85rem 1.25rem;
+            border-radius: 10px;
+            margin: 6px 12px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.25s ease;
+            display: flex; align-items: center;
+        }
+        .sidebar .nav-link:hover { 
+            color: #fff; 
+            background: var(--sidebar-hover); 
+            transform: translateX(4px);
+        }
+        .sidebar .nav-link.active {
+            color: #fff;
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.8), rgba(37, 99, 235, 0.8));
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+            font-weight: 600;
+        }
+        .sidebar .nav-link i { width: 24px; font-size: 1.1rem; }
+        
+        .sidebar .user-info {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            padding: 1.25rem;
+            border-top: 1px solid rgba(255,255,255,0.08);
+            background: rgba(0,0,0,0.2);
+            backdrop-filter: blur(8px);
+        }
+        .sidebar .user-info .name { color: #fff; font-weight: 600; font-size: 0.9rem; margin-bottom: 2px;}
+        .sidebar .user-info .role { color: rgba(255,255,255,0.5); font-size: 0.75rem; }
+
+        /* Top Navbar */
+        .top-navbar {
+            position: fixed; top: 0; left: 260px; right: 0;
+            height: 70px; z-index: 1030;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            display: flex; align-items: center;
+            padding: 0 2rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .top-navbar .page-title { font-weight: 700; font-size: 1.25rem; color: #0f172a; }
+        
+        .main-content {
+            margin-left: 260px;
+            margin-top: 70px;
+            padding: 2rem;
+            min-height: calc(100vh - 70px);
+            transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Enhanced Cards */
+        .stat-card {
+            border: 1px solid rgba(226, 232, 240, 0.8); 
+            border-radius: 16px;
+            box-shadow: var(--card-shadow);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #ffffff;
+        }
+        .stat-card:hover { 
+            transform: translateY(-4px); 
+            box-shadow: var(--card-hover-shadow); 
+            border-color: rgba(203, 213, 225, 1);
+        }
+        .stat-card .card-body { padding: 1.5rem; }
+        .stat-card .stat-icon {
+            width: 48px; height: 48px; border-radius: 12px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.35rem;
+            transition: transform 0.3s ease;
+        }
+        .stat-card:hover .stat-icon { transform: scale(1.1) rotate(5deg); }
+        .stat-card .stat-value { font-size: 1.8rem; font-weight: 800; color: #0f172a; line-height: 1.2; }
+        .stat-card .stat-label { font-size: 0.85rem; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;}
+
+        /* Modern Badges */
+        .badge { font-weight: 600; padding: 0.4em 0.8em; border-radius: 6px; letter-spacing: 0.3px; }
+        .badge-scopus { background: #dbeafe; color: #1d4ed8; }
+        .badge-wos { background: #d1fae5; color: #047857; }
+        .badge-wos-sci { background: #f3e8ff; color: #7e22ce; }
+        .badge-wos-esci { background: #ffedd5; color: #c2410c; }
+        .badge-q1 { background: #d1fae5; color: #047857; }
+        .badge-q2 { background: #dbeafe; color: #1d4ed8; }
+        .badge-q3 { background: #fef3c7; color: #b45309; }
+        .badge-q4 { background: #fee2e2; color: #b91c1c; }
+        .badge-journal { background: #e0e7ff; color: #4338ca; }
+        .badge-conference { background: #fce7f3; color: #be185d; }
+        .badge-book { background: #ccfbf1; color: #0f766e; }
+        .badge-book_chapter { background: #f5f3ff; color: #6d28d9; }
+
+        /* Elegant Table */
+        .table-clean { border-collapse: separate; border-spacing: 0; }
+        .table-clean th {
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.75rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 1px;
+            color: #64748b; border-bottom: 2px solid #f1f5f9;
+            padding: 1rem;
+            background: #f8fafc;
+        }
+        .table-clean th:first-child { border-top-left-radius: 8px; }
+        .table-clean th:last-child { border-top-right-radius: 8px; }
+        .table-clean td { 
+            padding: 1rem; font-size: 0.875rem; 
+            vertical-align: middle; 
+            border-bottom: 1px solid #f1f5f9;
+            color: #334155;
+        }
+        .table-clean tbody tr { transition: all 0.2s ease; }
+        .table-clean tbody tr:hover { background: #f8fafc; }
+        .table-clean tbody tr:last-child td { border-bottom: none; }
+
+        /* Buttons & Inputs */
+        .btn { font-weight: 500; letter-spacing: 0.3px; border-radius: 8px; transition: all 0.2s ease; }
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border: none;
+            box-shadow: 0 4px 6px rgba(37, 99, 235, 0.2);
+        }
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 12px rgba(37, 99, 235, 0.3);
+        }
+        .form-control, .form-select {
+            border-radius: 8px;
+            border: 1px solid #cbd5e1;
+            padding: 0.5rem 1rem;
+            transition: all 0.2s ease;
+        }
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        /* Mobile Adjustments */
+        .sidebar-toggle { display: none; }
+        @media (max-width: 992px) {
+            .sidebar { transform: translateX(-100%); width: 280px;}
+            .sidebar.show { transform: translateX(0); }
+            .top-navbar { left: 0; padding: 0 1rem; }
+            .main-content { margin-left: 0; padding: 1rem; }
+            .sidebar-toggle { display: block; border: none; background: transparent; font-size: 1.5rem; color: #334155;}
+            .sidebar-overlay {
+                position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5);
+                backdrop-filter: blur(4px);
+                z-index: 1035; display: none; opacity: 0; transition: opacity 0.3s;
+            }
+            .sidebar-overlay.show { display: block; opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+
+{% if user.is_authenticated %}
+<!-- Sidebar -->
+<nav class="sidebar" id="sidebar">
+    <div class="brand">
+        <h5><i class="bi bi-mortarboard-fill me-2"></i>RPMS</h5>
+        <small>Research Publication Manager</small>
+    </div>
+    <ul class="nav flex-column mt-3 mb-5 pb-5">
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}"
+               href="{% url 'dashboard' %}">
+                <i class="bi bi-speedometer2"></i> Dashboard
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'publication_list' %}active{% endif %}"
+               href="{% url 'publication_list' %}">
+                <i class="bi bi-journal-text"></i> Publications
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'self_upload' %}active{% endif %}"
+               href="{% url 'self_upload' %}">
+                <i class="bi bi-plus-circle"></i> Add Publication
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'upload_publication' %}active{% endif %}"
+               href="{% url 'upload_publication' %}">
+                <i class="bi bi-cloud-upload"></i> Upload
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if request.resolver_match.url_name == 'export_page' %}active{% endif %}"
+               href="{% url 'export_page' %}">
+                <i class="bi bi-download"></i> Export
+            </a>
+        </li>
+    </ul>
+    <div class="user-info">
+        <div class="d-flex align-items-center justify-content-between">
+            <div>
+                <div class="name"><i class="bi bi-person-circle me-1"></i> {{ user.username }}</div>
+                <div class="role">{% if user.is_superuser %}Administrator{% else %}Faculty{% endif %}</div>
+            </div>
+            <a href="{% url 'logout' %}" class="btn btn-sm btn-outline-light" title="Logout">
+                <i class="bi bi-box-arrow-right"></i>
+            </a>
+        </div>
+    </div>
+</nav>
+
+<!-- Mobile overlay -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+
+<!-- Top Navbar -->
+<div class="top-navbar">
+    <button class="btn btn-sm btn-outline-secondary sidebar-toggle me-3" onclick="toggleSidebar()">
+        <i class="bi bi-list"></i>
+    </button>
+    <span class="page-title">{% block page_title %}Dashboard{% endblock %}</span>
+    <div class="ms-auto d-flex align-items-center gap-2">
+        <span class="badge bg-light text-dark">
+            <i class="bi bi-person"></i> {{ user.username }}
+        </span>
+    </div>
+</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    {% block content %}{% endblock %}
+</div>
+
+{% else %}
+<!-- Unauthenticated pages (login, register) -->
+<div class="min-vh-100 d-flex align-items-center justify-content-center" style="background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);">
+    {% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3" style="z-index:9999;" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endfor %}
+
+    {% block auth_content %}{% endblock %}
+</div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('show');
+    document.getElementById('sidebarOverlay').classList.toggle('show');
+}
+</script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,169 @@
+{% extends 'core/base.html' %}
+
+{% block page_title %}Publications{% endblock %}
+
+{% block content %}
+<!-- Filter Panel -->
+<div class="card stat-card bg-white mb-4">
+    <div class="card-body">
+        <h6 class="fw-semibold mb-3"><i class="bi bi-funnel me-2"></i>Filter Publications</h6>
+        <form method="get" id="filterForm">
+            <div class="row g-2 mb-2">
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Faculty Name</label>
+                    <input type="text" name="faculty_name" class="form-control form-control-sm"
+                           placeholder="Search by faculty name..."
+                           value="{{ filters.faculty_name }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Paper Title</label>
+                    <input type="text" name="title" class="form-control form-control-sm"
+                           placeholder="Search by paper title..."
+                           value="{{ filters.title }}">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Journal / Conference</label>
+                    <input type="text" name="journal" class="form-control form-control-sm"
+                           placeholder="Search by journal/conference..."
+                           value="{{ filters.journal }}">
+                </div>
+            </div>
+            <div class="row g-2 mb-3">
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Year</label>
+                    <select name="year" class="form-select form-select-sm">
+                        <option value="">All Years</option>
+                        {% for y in years %}
+                        <option value="{{ y }}" {% if filters.year == y|stringformat:'s' %}selected{% endif %}>{{ y }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Type</label>
+                    <select name="type" class="form-select form-select-sm">
+                        <option value="">All Types</option>
+                        {% for val, label in type_choices %}
+                        <option value="{{ val }}" {% if filters.type == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">Quartile</label>
+                    <select name="quartile" class="form-select form-select-sm">
+                        <option value="">All</option>
+                        {% for val, label in quartile_choices %}
+                        <option value="{{ val }}" {% if filters.quartile == val %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">Indexed In</label>
+                    <div class="d-flex gap-3 mt-1">
+                        {% for val, label in indexed_choices %}
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" name="indexed"
+                                   value="{{ val }}" id="idx_{{ val }}"
+                                   {% if val in filters.indexed %}checked{% endif %}>
+                            <label class="form-check-label small" for="idx_{{ val }}">{{ label }}</label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-search"></i> Filter
+                    </button>
+                    <a href="{% url 'publication_list' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </a>
+                </div>
+            </div>
+        </form>
+        <div class="text-muted small">
+            Showing <strong>{{ filtered_count }}</strong> of <strong>{{ total_count }}</strong> publications
+        </div>
+    </div>
+</div>
+
+<!-- Publications Table -->
+<div class="card stat-card bg-white">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-clean mb-0">
+                <thead>
+                    <tr>
+                        <th>SL.NO</th>
+                        <th>Faculty Name</th>
+                        <th>Title</th>
+                        <th>Journal / Conference</th>
+                        <th>Type</th>
+                        <th>Year</th>
+                        <th>Indexed</th>
+                        <th>Quartile</th>
+                        <th>DOI</th>
+                        <th>PDF</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pub in publications %}
+                    <tr>
+                        <td>{{ pub.sl_no }}</td>
+                        <td class="fw-medium">{{ pub.faculty_name }}</td>
+                        <td>{{ pub.title|truncatewords:15 }}</td>
+                        <td>{{ pub.journal_conference|truncatewords:8 }}</td>
+                        <td>
+                            <span class="badge badge-{{ pub.type }}">{{ pub.get_type_display }}</span>
+                        </td>
+                        <td>{{ pub.year }}</td>
+                        <td>
+                            {% if pub.indexed == 'SCOPUS' %}
+                                <span class="badge badge-scopus">SCOPUS</span>
+                            {% elif pub.indexed == 'WOS' %}
+                                <span class="badge badge-wos">WOS</span>
+                            {% elif pub.indexed == 'WOS-SCI' %}
+                                <span class="badge badge-wos-sci">WOS-SCI</span>
+                            {% elif pub.indexed == 'WOS-ESCI' %}
+                                <span class="badge badge-wos-esci">WOS-ESCI</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pub.quartile %}
+                                <span class="badge badge-{{ pub.quartile|lower }}">{{ pub.quartile }}</span>
+                            {% else %}
+                                <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pub.doi %}
+                            <a href="{{ pub.doi_url }}" target="_blank" class="text-decoration-none small text-primary">
+                                <i class="bi bi-link-45deg"></i> Link
+                            </a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if pub.pdf_file %}
+                            <a href="{{ pub.pdf_file.url }}" target="_blank" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-file-pdf"></i>
+                            </a>
+                            {% else %}
+                            <span class="text-muted">—</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-5">
+                            <i class="bi bi-search" style="font-size:2.5rem;color:#d1d5db;"></i>
+                            <h6 class="mt-3 text-muted">No publications found</h6>
+                            <p class="text-muted small mb-0">Try adjusting your filters or upload new publications.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

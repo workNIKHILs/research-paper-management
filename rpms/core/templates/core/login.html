@@ -1,0 +1,43 @@
+{% extends 'core/base.html' %}
+
+{% block auth_content %}
+<div class="card shadow-lg" style="width:400px;max-width:90vw;border:none;border-radius:16px;">
+    <div class="card-body p-4">
+        <div class="text-center mb-4">
+            <div class="d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
+                 style="width:56px;height:56px;background:#e0e7ff;">
+                <i class="bi bi-mortarboard-fill" style="font-size:1.5rem;color:#3730a3;"></i>
+            </div>
+            <h5 class="fw-bold mb-1">Welcome Back</h5>
+            <p class="text-muted small">Research Publication Management System</p>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Username</label>
+                {{ form.username }}
+            </div>
+            <div class="mb-3">
+                <label class="form-label small fw-semibold">Password</label>
+                {{ form.password }}
+            </div>
+
+            {% if form.errors %}
+            <div class="alert alert-danger small py-2">
+                Invalid username or password.
+            </div>
+            {% endif %}
+
+            <button type="submit" class="btn btn-primary w-100 mb-3">
+                <i class="bi bi-box-arrow-in-right me-1"></i> Sign In
+            </button>
+
+            <p class="text-center text-muted small mb-0">
+                Don't have an account?
+                <a href="{% url 'register' %}" class="text-decoration-none fw-semibold">Register</a>
+            </p>
+        </form>
+    </div>
+</div>
+{% endblock %}

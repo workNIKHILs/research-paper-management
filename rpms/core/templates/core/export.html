@@ -1,0 +1,135 @@
+{% extends 'core/base.html' %}
+
+{% block page_title %}Export Publications{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- Filter -->
+        <div class="card stat-card bg-white mb-4">
+            <div class="card-body">
+                <h5 class="fw-semibold mb-3"><i class="bi bi-funnel me-2"></i>Filter & Export</h5>
+                <form method="get" id="exportFilterForm">
+                    <div class="row g-2 mb-3">
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Year</label>
+                            <select name="year" class="form-select form-select-sm">
+                                <option value="">All Years</option>
+                                {% for y in years %}
+                                <option value="{{ y }}" {% if filters.year == y|stringformat:'s' %}selected{% endif %}>{{ y }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Faculty Name</label>
+                            <input type="text" name="faculty_name" class="form-control form-control-sm"
+                                   placeholder="Search..." value="{{ filters.faculty_name }}">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Type</label>
+                            <select name="type" class="form-select form-select-sm">
+                                <option value="">All Types</option>
+                                {% for val, label in type_choices %}
+                                <option value="{{ val }}" {% if filters.type == val %}selected{% endif %}>{{ label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small fw-semibold">Indexed In</label>
+                            <div class="d-flex flex-wrap gap-2 mt-1">
+                                {% for val, label in indexed_choices %}
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" name="indexed"
+                                           value="{{ val }}" id="exp_{{ val }}"
+                                           {% if val in filters.indexed %}checked{% endif %}>
+                                    <label class="form-check-label small" for="exp_{{ val }}">{{ label }}</label>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-sm">
+                        <i class="bi bi-eye me-1"></i> Preview
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Preview + Export Buttons -->
+        <div class="card stat-card bg-white">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                    <div>
+                        <h6 class="fw-semibold mb-0">
+                            <i class="bi bi-table me-2"></i>Export Preview
+                        </h6>
+                        <p class="text-muted small mb-0">{{ filtered_count }} publications will be exported</p>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <a href="{% url 'export_download' %}?format=xlsx{% for key, val in filters.items %}&{{ key }}={{ val }}{% endfor %}"
+                           class="btn btn-success btn-sm">
+                            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Export Excel
+                        </a>
+                        <a href="{% url 'export_download' %}?format=csv{% for key, val in filters.items %}&{{ key }}={{ val }}{% endfor %}"
+                           class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-filetype-csv me-1"></i> Export CSV
+                        </a>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-clean table-sm mb-0">
+                        <thead>
+                            <tr>
+                                <th>SL.NO</th>
+                                <th>Faculty</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Journal/Conference</th>
+                                <th>Year</th>
+                                <th>Indexed</th>
+                                <th>Quartile</th>
+                                <th>DOI</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for pub in publications %}
+                            <tr>
+                                <td>{{ pub.sl_no }}</td>
+                                <td>{{ pub.faculty_name }}</td>
+                                <td>{{ pub.title|truncatewords:10 }}</td>
+                                <td><span class="badge badge-{{ pub.type }}">{{ pub.get_type_display }}</span></td>
+                                <td>{{ pub.journal_conference|truncatewords:6 }}</td>
+                                <td>{{ pub.year }}</td>
+                                <td>
+                                    {% if pub.indexed == 'SCOPUS' %}
+                                        <span class="badge badge-scopus">SCOPUS</span>
+                                    {% elif pub.indexed == 'WOS' %}
+                                        <span class="badge badge-wos">WOS</span>
+                                    {% elif pub.indexed == 'WOS-SCI' %}
+                                        <span class="badge badge-wos-sci">WOS-SCI</span>
+                                    {% elif pub.indexed == 'WOS-ESCI' %}
+                                        <span class="badge badge-wos-esci">WOS-ESCI</span>
+                                    {% endif %}
+                                </td>
+                                <td>{{ pub.quartile|default:"—" }}</td>
+                                <td>{{ pub.doi|truncatechars:20|default:"—" }}</td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-4 text-muted">
+                                    <i class="bi bi-inbox" style="font-size:2rem;"></i>
+                                    <p class="mb-0 mt-2">No publications match current filters.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
