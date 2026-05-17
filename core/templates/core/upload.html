@@ -1,0 +1,131 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white fw-bold">
+                📤 Upload Publication
+            </div>
+            <div class="card-body p-4">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <!-- Common Fields -->
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Faculty</label>
+                        {{ form.faculty }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Publication Type</label>
+                        {{ form.type }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Title</label>
+                        {{ form.title }}
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Month</label>
+                            {{ form.month }}
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label fw-bold">Year</label>
+                            {{ form.year }}
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Pages</label>
+                        {{ form.pages }}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">PDF File</label>
+                        {{ form.pdf_file }}
+                    </div>
+
+                    <!-- Journal Fields -->
+                    <div id="journal_fields" class="type-fields d-none">
+                        <hr><h6 class="text-primary">📰 Journal Details</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Journal Name</label>
+                            {{ form.journal_name }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">ISSN</label>
+                                {{ form.issn }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Volume</label>
+                                {{ form.volume }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Issue</label>
+                                {{ form.issue }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Conference Fields -->
+                    <div id="conference_fields" class="type-fields d-none">
+                        <hr><h6 class="text-success">🎤 Conference Details</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Conference Name</label>
+                            {{ form.conference_name }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Location</label>
+                                {{ form.location }}
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">ISBN</label>
+                                {{ form.conference_isbn }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Book / Book Chapter Fields -->
+                    <div id="book_fields" class="type-fields d-none">
+                        <hr><h6 class="text-warning">📖 Book Details</h6>
+                        <div class="mb-3">
+                            <label class="form-label">Book Name</label>
+                            {{ form.book_name }}
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Publisher</label>
+                                {{ form.publisher }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">ISBN</label>
+                                {{ form.book_isbn }}
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Chapter Number</label>
+                                {{ form.chapter_number }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary w-100 mt-3">
+                        <i class="bi bi-upload"></i> Upload Publication
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showFields(type) {
+    document.querySelectorAll('.type-fields').forEach(el => el.classList.add('d-none'));
+    if (type === 'journal') document.getElementById('journal_fields').classList.remove('d-none');
+    if (type === 'conference') document.getElementById('conference_fields').classList.remove('d-none');
+    if (type === 'book' || type === 'book_chapter') document.getElementById('book_fields').classList.remove('d-none');
+}
+// Show fields on page load if type is already selected
+window.onload = () => showFields(document.getElementById('id_type').value);
+</script>
+{% endblock %}

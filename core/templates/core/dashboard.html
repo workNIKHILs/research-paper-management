@@ -1,0 +1,67 @@
+{% extends 'core/base.html' %}
+{% block content %}
+<h2 class="mb-4">📊 Dashboard</h2>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary shadow">
+            <div class="card-body text-center">
+                <h1>{{ total }}</h1>
+                <p class="mb-0">Total Publications</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success shadow">
+            <div class="card-body text-center">
+                <h1>{{ journals }}</h1>
+                <p class="mb-0">Journals</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning shadow">
+            <div class="card-body text-center">
+                <h1>{{ conferences }}</h1>
+                <p class="mb-0">Conferences</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-danger shadow">
+            <div class="card-body text-center">
+                <h1>{{ books }}</h1>
+                <p class="mb-0">Books</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-header bg-white fw-bold">🕐 Recent Publications</div>
+    <div class="card-body">
+        <table class="table table-hover">
+            <thead class="table-light">
+                <tr>
+                    <th>Title</th>
+                    <th>Type</th>
+                    <th>Faculty</th>
+                    <th>Year</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for pub in recent %}
+                <tr>
+                    <td>{{ pub.title }}</td>
+                    <td><span class="badge bg-primary">{{ pub.get_type_display }}</span></td>
+                    <td>{{ pub.faculty.name }}</td>
+                    <td>{{ pub.year }}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted">No publications yet</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
