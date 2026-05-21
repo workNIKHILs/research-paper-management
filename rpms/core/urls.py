@@ -13,4 +13,6 @@ urlpatterns = [
     path('upload/confirm/', views.upload_confirm, name='upload_confirm'),
     path('export/', views.export_page, name='export_page'),
     path('export/download/', views.export_download, name='export_download'),
+    path('edit/<int:pk>/', views.edit_publication, name='edit_publication'),
+    path('delete/<int:pk>/', views.delete_publication, name='delete_publication'),
 ]

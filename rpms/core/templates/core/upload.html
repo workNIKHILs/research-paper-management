@@ -91,16 +91,20 @@
                                 <option value="">— Skip —</option>
                                 {% for h in headers %}
                                 <option value="{{ forloop.counter0 }}"
-                                    {% if field == 'faculty_name' and 'name' in h|lower or field == 'faculty_name' and 'faculty' in h|lower %}selected
+                                    {% if field == 'faculty_name' and 'faculty' in h|lower %}selected
                                     {% elif field == 'title' and 'title' in h|lower %}selected
                                     {% elif field == 'type' and 'type' in h|lower %}selected
-                                    {% elif field == 'journal_conference' and 'journal' in h|lower or field == 'journal_conference' and 'conference' in h|lower %}selected
+                                    {% elif field == 'journal_conference' and 'journal' in h|lower %}selected
+                                    {% elif field == 'journal_conference' and 'conference' in h|lower %}selected
                                     {% elif field == 'page_no' and 'page' in h|lower %}selected
                                     {% elif field == 'vol_issue' and 'vol' in h|lower %}selected
-                                    {% elif field == 'year' and 'year' in h|lower %}selected
+                                    {% elif field == 'vol_issue' and 'issue' in h|lower %}selected
+                                    {% elif field == 'publication_date' and 'year' in h|lower %}selected
+                                    {% elif field == 'publication_date' and 'date' in h|lower %}selected
                                     {% elif field == 'doi' and 'doi' in h|lower %}selected
                                     {% elif field == 'indexed' and 'index' in h|lower %}selected
-                                    {% elif field == 'quartile' and 'quartile' in h|lower or field == 'quartile' and 'q1' in h|lower %}selected
+                                    {% elif field == 'quartile' and 'quartile' in h|lower %}selected
+                                    {% elif field == 'quartile' and 'q1' in h|lower %}selected
                                     {% endif %}
                                 >{{ h }}</option>
                                 {% endfor %}

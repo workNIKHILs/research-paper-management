@@ -3,7 +3,7 @@ import csv
 import io
 from datetime import date
 
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -58,10 +58,8 @@ def register_view(request):
 # ──────────────────────────────────────
 
 def _get_publications(request):
-    """Return queryset scoped to user role."""
-    if request.user.is_superuser:
-        return Publication.objects.all()
-    return Publication.objects.filter(faculty__user=request.user)
+    """Return all publications for all authenticated users."""
+    return Publication.objects.select_related('faculty', 'faculty__user').all()
 
 
 # ──────────────────────────────────────
@@ -99,10 +97,10 @@ def dashboard(request):
         'wos_count': wos_count,
         'wos_sci_count': wos_sci_count,
         'wos_esci_count': wos_esci_count,
-        'year_labels': json.dumps(year_labels),
-        'year_counts': json.dumps(year_counts),
-        'faculty_labels': json.dumps(faculty_labels),
-        'faculty_counts': json.dumps(faculty_counts),
+        'year_labels': year_labels,
+        'year_counts': year_counts,
+        'faculty_labels': faculty_labels,
+        'faculty_counts': faculty_counts,
         'recent': pubs.order_by('-created_at')[:10],
     }
     return render(request, 'core/dashboard.html', context)
@@ -195,21 +193,41 @@ def upload_publication(request):
         form = ExcelUploadForm(request.POST, request.FILES)
         if form.is_valid() and openpyxl:
             f = request.FILES['file']
-            wb = openpyxl.load_workbook(f, read_only=True)
-            ws = wb.active
+            try:
+                wb = openpyxl.load_workbook(f, read_only=True, data_only=True)
+                ws = wb.active
 
-            rows = list(ws.iter_rows(values_only=True))
-            wb.close()
-
-            if len(rows) < 3:
-                messages.error(request, "Excel file must have at least 3 rows (title, headers, data).")
+                # Limit generator strictly to avoid memory bloat
+                rows = []
+                for idx, r in enumerate(ws.iter_rows(values_only=True)):
+                    if idx >= 1000:
+                        messages.warning(request, "Only the first 1,000 rows were loaded due to size limits.")
+                        break
+                    rows.append(r)
+                wb.close()
+            except Exception as e:
+                messages.error(request, f"Error reading Excel file: {str(e)}")
                 return render(request, 'core/upload.html', {'form': form})
 
-            # Row 1 = title (skip), Row 2 = headers, Row 3+ = data
-            headers = [str(cell) if cell else f'Column {i+1}' for i, cell in enumerate(rows[1])]
+            if len(rows) < 2:
+                messages.error(request, "Excel file must have at least 2 rows (headers and data).")
+                return render(request, 'core/upload.html', {'form': form})
+
+            # Find header row dynamically
+            header_row_idx = 0
+            best_match_count = 0
+            for i, row in enumerate(rows[:5]):
+                row_str = ' '.join([str(c).lower() for c in row if c is not None])
+                matches = sum(1 for kw in ['title', 'faculty', 'journal', 'conference', 'year', 'doi', 'index'] if kw in row_str)
+                if matches > best_match_count:
+                    best_match_count = matches
+                    header_row_idx = i
+
+            headers = [str(cell) if cell is not None else f'Column {i+1}' for i, cell in enumerate(rows[header_row_idx])]
             data_rows = []
-            for row in rows[2:]:
-                data_rows.append([str(cell) if cell is not None else '' for cell in row])
+            for row in rows[header_row_idx+1:]:
+                if any(cell is not None and str(cell).strip() != '' for cell in row):
+                    data_rows.append([str(cell) if cell is not None else '' for cell in row])
 
             # Store in session
             request.session['upload_headers'] = headers
@@ -225,7 +243,7 @@ def upload_publication(request):
                 'total_rows': len(data_rows),
                 'system_fields': [
                     'faculty_name', 'title', 'type', 'journal_conference',
-                    'page_no', 'vol_issue', 'year', 'doi', 'indexed', 'quartile'
+                    'page_no', 'vol_issue', 'publication_date', 'doi', 'indexed', 'quartile'
                 ],
                 'system_field_labels': {
                     'faculty_name': 'Faculty Name',
@@ -234,7 +252,7 @@ def upload_publication(request):
                     'journal_conference': 'Journal/Conference',
                     'page_no': 'Page No',
                     'vol_issue': 'Vol.No/Issue No',
-                    'year': 'Year',
+                    'publication_date': 'Publication Date',
                     'doi': 'DOI',
                     'indexed': 'Indexed',
                     'quartile': 'Quartile',
@@ -263,7 +281,7 @@ def upload_confirm(request):
     mapping = {}
     system_fields = [
         'faculty_name', 'title', 'type', 'journal_conference',
-        'page_no', 'vol_issue', 'year', 'doi', 'indexed', 'quartile'
+        'page_no', 'vol_issue', 'publication_date', 'doi', 'indexed', 'quartile'
     ]
     for field in system_fields:
         col_idx = request.POST.get(f'map_{field}', '')
@@ -286,12 +304,30 @@ def upload_confirm(request):
                 else:
                     pub_data[field] = ''
 
-            # Parse year safely
-            year_val = pub_data.get('year', '2024')
-            try:
-                year_val = int(float(str(year_val).strip()))
-            except (ValueError, TypeError):
-                year_val = 2024
+            # Parse date safely and refine formatting
+            pub_date_val = str(pub_data.get('publication_date', '')).strip()
+            
+            # Handle native Excel datetimes smartly
+            if pub_date_val.endswith(' 00:00:00'):
+                date_part = pub_date_val.replace(' 00:00:00', '')
+                if date_part.endswith('-01-01'):
+                    # e.g., 2024-01-01 -> 2024
+                    pub_date_val = date_part.split('-')[0]
+                elif date_part.endswith('-01'):
+                    # e.g., 2024-05-01 -> May 2024
+                    try:
+                        from datetime import datetime
+                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        pub_date_val = dt.strftime("%B %Y")
+                    except ValueError:
+                        pub_date_val = date_part
+                else:
+                    try:
+                        from datetime import datetime
+                        dt = datetime.strptime(date_part, "%Y-%m-%d")
+                        pub_date_val = dt.strftime("%d/%m/%Y")
+                    except ValueError:
+                        pub_date_val = date_part
 
             # Validate indexed value
             indexed_val = str(pub_data.get('indexed', '')).strip().upper()
@@ -319,7 +355,7 @@ def upload_confirm(request):
                 journal_conference=pub_data.get('journal_conference', ''),
                 page_no=pub_data.get('page_no', ''),
                 vol_issue=pub_data.get('vol_issue', ''),
-                year=year_val,
+                publication_date=pub_date_val,
                 doi=pub_data.get('doi', ''),
                 indexed=indexed_val,
                 quartile=quartile_val,
@@ -397,7 +433,7 @@ def export_download(request):
     headers_row = [
         'SL.NO', 'Faculty Name', 'Title', 'Type',
         'Journal/Conference', 'Page No', 'Vol/Issue',
-        'Year', 'DOI', 'Indexed', 'Quartile'
+        'Publication Date', 'DOI', 'Indexed', 'Quartile'
     ]
 
     if fmt == 'xlsx' and openpyxl:
@@ -410,7 +446,7 @@ def export_download(request):
             ws.append([
                 pub.sl_no, pub.faculty_name, pub.title,
                 pub.get_type_display(), pub.journal_conference,
-                pub.page_no, pub.vol_issue, pub.year,
+                pub.page_no, pub.vol_issue, pub.publication_date or pub.year,
                 pub.doi, pub.indexed, pub.quartile,
             ])
 
@@ -429,7 +465,46 @@ def export_download(request):
             writer.writerow([
                 pub.sl_no, pub.faculty_name, pub.title,
                 pub.get_type_display(), pub.journal_conference,
-                pub.page_no, pub.vol_issue, pub.year,
+                pub.page_no, pub.vol_issue, pub.publication_date or pub.year,
                 pub.doi, pub.indexed, pub.quartile,
             ])
         return response
+
+# ──────────────────────────────────────
+#  EDIT / DELETE
+# ──────────────────────────────────────
+
+@login_required
+def edit_publication(request, pk):
+    pub = get_object_or_404(Publication, pk=pk)
+    
+    # Check authorization
+    if not request.user.is_superuser and pub.faculty.user != request.user:
+        messages.error(request, "You do not have permission to edit this publication.")
+        return redirect('publication_list')
+        
+    form = PublicationForm(request.POST or None, request.FILES or None, instance=pub)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, "Publication updated successfully.")
+        return redirect('publication_list')
+        
+    return render(request, 'core/edit_publication.html', {'form': form, 'pub': pub})
+
+@login_required
+def delete_publication(request, pk):
+    pub = get_object_or_404(Publication, pk=pk)
+    
+    # Check authorization
+    if not request.user.is_superuser and pub.faculty.user != request.user:
+        messages.error(request, "You do not have permission to delete this publication.")
+        return redirect('publication_list')
+        
+    if request.method == 'POST':
+        pub.delete()
+        messages.success(request, "Publication deleted successfully.")
+        return redirect('publication_list')
+        
+    # If not POST, you might want to show a confirmation page, 
+    # but for simplicity, we can redirect or show an error
+    return render(request, 'core/delete_publication.html', {'pub': pub})

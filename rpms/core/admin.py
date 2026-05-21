@@ -2,10 +2,16 @@ from django.contrib import admin
 from .models import Faculty, Publication
 
 
+class PublicationInline(admin.TabularInline):
+    model = Publication
+    extra = 1
+
+
 @admin.register(Faculty)
 class FacultyAdmin(admin.ModelAdmin):
     list_display = ['name', 'user']
     search_fields = ['name']
+    inlines = [PublicationInline]
 
 
 @admin.register(Publication)

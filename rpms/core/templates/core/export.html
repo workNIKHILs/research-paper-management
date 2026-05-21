@@ -87,7 +87,7 @@
                                 <th>Title</th>
                                 <th>Type</th>
                                 <th>Journal/Conference</th>
-                                <th>Year</th>
+                                <th>Date</th>
                                 <th>Indexed</th>
                                 <th>Quartile</th>
                                 <th>DOI</th>
@@ -101,7 +101,7 @@
                                 <td>{{ pub.title|truncatewords:10 }}</td>
                                 <td><span class="badge badge-{{ pub.type }}">{{ pub.get_type_display }}</span></td>
                                 <td>{{ pub.journal_conference|truncatewords:6 }}</td>
-                                <td>{{ pub.year }}</td>
+                                <td>{{ pub.publication_date|default:pub.year }}</td>
                                 <td>
                                     {% if pub.indexed == 'SCOPUS' %}
                                         <span class="badge badge-scopus">SCOPUS</span>

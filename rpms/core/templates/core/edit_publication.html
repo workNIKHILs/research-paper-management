@@ -1,0 +1,106 @@
+{% extends 'core/base.html' %}
+
+{% block page_title %}Edit Publication{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card stat-card bg-white">
+            <div class="card-body p-4">
+                <div class="d-flex align-items-center justify-content-between mb-4">
+                    <div>
+                        <h5 class="fw-semibold mb-1"><i class="bi bi-pencil-square me-2"></i>Edit Publication</h5>
+                        <p class="text-muted small mb-0">Update details for "{{ pub.title }}"</p>
+                    </div>
+                    <a href="{% url 'publication_list' %}" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Back
+                    </a>
+                </div>
+
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    {% if form.errors %}
+                    <div class="alert alert-danger small py-2">
+                        Please correct the errors below.
+                    </div>
+                    {% endif %}
+
+                    <div class="row g-3">
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Title</label>
+                            {{ form.title }}
+                            {{ form.title.errors }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Type</label>
+                            {{ form.type }}
+                            {{ form.type.errors }}
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label class="form-label small fw-semibold">Journal/Conference Name</label>
+                            {{ form.journal_conference }}
+                            {{ form.journal_conference.errors }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Date</label>
+                            {{ form.publication_date }}
+                            {{ form.publication_date.errors }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Vol/Issue</label>
+                            {{ form.vol_issue }}
+                            {{ form.vol_issue.errors }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Page No.</label>
+                            {{ form.page_no }}
+                            {{ form.page_no.errors }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Indexed In</label>
+                            {{ form.indexed }}
+                            {{ form.indexed.errors }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">Quartile</label>
+                            {{ form.quartile }}
+                            {{ form.quartile.errors }}
+                        </div>
+                        
+                        <div class="col-md-4">
+                            <label class="form-label small fw-semibold">DOI</label>
+                            {{ form.doi }}
+                            {{ form.doi.errors }}
+                        </div>
+                        
+                        <div class="col-12">
+                            <label class="form-label small fw-semibold">Update PDF</label>
+                            {{ form.pdf_file }}
+                            {% if pub.pdf_file %}
+                            <small class="text-muted d-block mt-1">Current file: <a href="{{ pub.pdf_file.url }}" target="_blank">View PDF</a></small>
+                            {% endif %}
+                            {{ form.pdf_file.errors }}
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <div class="d-flex gap-2 justify-content-end">
+                        <a href="{% url 'publication_list' %}" class="btn btn-outline-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

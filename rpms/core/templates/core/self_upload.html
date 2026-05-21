@@ -42,10 +42,10 @@
                         </div>
                         <div class="col-md-6">
                             <label class="form-label small fw-semibold">
-                                Year <span class="text-danger">*</span>
+                                Date <span class="text-danger">*</span>
                             </label>
-                            {{ form.year }}
-                            {% for error in form.year.errors %}
+                            {{ form.publication_date }}
+                            {% for error in form.publication_date.errors %}
                             <div class="text-danger small mt-1">{{ error }}</div>
                             {% endfor %}
                         </div>

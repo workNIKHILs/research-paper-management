@@ -48,13 +48,23 @@ class ExcelUploadForm(forms.Form):
         f = self.cleaned_data['file']
         if not f.name.endswith('.xlsx'):
             raise forms.ValidationError('Only .xlsx files are allowed.')
+        
+        # Validate MIME type
+        valid_mime = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        if f.content_type != valid_mime:
+            raise forms.ValidationError('Invalid file type. Ensure it is a genuine Excel file.')
+            
+        # Validate file size (5MB limit)
+        if f.size > 5 * 1024 * 1024:
+            raise forms.ValidationError('File too large. Maximum size is 5MB.')
+            
         return f
 
 
 class PublicationForm(forms.ModelForm):
-    year = forms.ChoiceField(
-        choices=[('', 'Select Year')] + YEAR_CHOICES,
-        widget=forms.Select(attrs={'class': 'form-select'})
+    publication_date = forms.CharField(
+        widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'e.g., 2024, May 2024, or 12/05/2024'}),
+        help_text='Enter Year, Month Year, or Full Date'
     )
     type = forms.ChoiceField(
         choices=[('', 'Select Type')] + list(TYPE_CHOICES),
@@ -74,7 +84,7 @@ class PublicationForm(forms.ModelForm):
         model = Publication
         fields = [
             'title', 'type', 'journal_conference',
-            'page_no', 'vol_issue', 'year',
+            'page_no', 'vol_issue', 'publication_date',
             'doi', 'indexed', 'quartile', 'pdf_file',
         ]
         widgets = {

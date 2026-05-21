@@ -88,7 +88,9 @@
         <div class="card stat-card bg-white">
             <div class="card-body">
                 <h6 class="fw-semibold mb-3"><i class="bi bi-bar-chart me-2"></i>Publications by Year</h6>
-                <canvas id="yearChart" height="260"></canvas>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="yearChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -96,7 +98,9 @@
         <div class="card stat-card bg-white">
             <div class="card-body">
                 <h6 class="fw-semibold mb-3"><i class="bi bi-people me-2"></i>Publications per Faculty</h6>
-                <canvas id="facultyChart" height="260"></canvas>
+                <div style="position: relative; height: 260px; width: 100%;">
+                    <canvas id="facultyChart"></canvas>
+                </div>
             </div>
         </div>
     </div>
@@ -113,7 +117,7 @@
                         <th>SL.NO</th>
                         <th>Faculty</th>
                         <th>Title</th>
-                        <th>Year</th>
+                        <th>Date</th>
                         <th>Indexed</th>
                         <th>DOI</th>
                     </tr>
@@ -124,7 +128,7 @@
                         <td>{{ pub.sl_no }}</td>
                         <td>{{ pub.faculty_name }}</td>
                         <td>{{ pub.title|truncatewords:12 }}</td>
-                        <td>{{ pub.year }}</td>
+                        <td>{{ pub.publication_date|default:pub.year }}</td>
                         <td>
                             {% if pub.indexed == 'SCOPUS' %}
                                 <span class="badge badge-scopus">SCOPUS</span>

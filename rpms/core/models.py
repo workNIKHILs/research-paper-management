@@ -57,6 +57,7 @@ class Publication(models.Model):
     )
     page_no = models.CharField(max_length=100, blank=True, help_text='Page number')
     vol_issue = models.CharField(max_length=100, blank=True, help_text='Vol.No/Issue No')
+    publication_date = models.CharField(max_length=100, blank=True, help_text='Full Date/Month-Year')
     year = models.IntegerField(help_text='Publication year (2018-2024)')
     doi = models.CharField(max_length=300, blank=True, help_text='DOI identifier')
     indexed = models.CharField(
@@ -85,3 +86,20 @@ class Publication(models.Model):
                 return self.doi
             return f"https://doi.org/{self.doi}"
         return ''
+
+    def save(self, *args, **kwargs):
+        if self.publication_date:
+            import re
+            match = re.search(r'\b((?:19|20)\d{2})\b', str(self.publication_date))
+            if match:
+                self.year = int(match.group(1))
+            elif not getattr(self, 'year', None):
+                self.year = 2024
+        elif not self.publication_date and getattr(self, 'year', None):
+            self.publication_date = str(self.year)
+        
+        # Ensure year has a fallback integer value
+        if not getattr(self, 'year', None):
+            self.year = 2024
+
+        super().save(*args, **kwargs)
