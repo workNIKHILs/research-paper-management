@@ -39,6 +39,24 @@
                     </select>
                 </div>
                 <div class="col-md-2">
+                    <label class="form-label small fw-semibold">From Month</label>
+                    <select name="start_month" class="form-select form-select-sm">
+                        <option value="">Any</option>
+                        {% for m in months %}
+                        <option value="{{ m.val }}" {% if filters.start_month == m.val|stringformat:'s' %}selected{% endif %}>{{ m.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small fw-semibold">To Month</label>
+                    <select name="end_month" class="form-select form-select-sm">
+                        <option value="">Any</option>
+                        {% for m in months %}
+                        <option value="{{ m.val }}" {% if filters.end_month == m.val|stringformat:'s' %}selected{% endif %}>{{ m.label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
                     <label class="form-label small fw-semibold">Type</label>
                     <select name="type" class="form-select form-select-sm">
                         <option value="">All Types</option>

@@ -12,7 +12,7 @@
                 <h5 class="fw-semibold mb-3"><i class="bi bi-funnel me-2"></i>Filter & Export</h5>
                 <form method="get" id="exportFilterForm">
                     <div class="row g-2 mb-3">
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold">Year</label>
                             <select name="year" class="form-select form-select-sm">
                                 <option value="">All Years</option>
@@ -21,12 +21,30 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">From Month</label>
+                            <select name="start_month" class="form-select form-select-sm">
+                                <option value="">Any</option>
+                                {% for m in months %}
+                                <option value="{{ m.val }}" {% if filters.start_month == m.val|stringformat:'s' %}selected{% endif %}>{{ m.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label small fw-semibold">To Month</label>
+                            <select name="end_month" class="form-select form-select-sm">
+                                <option value="">Any</option>
+                                {% for m in months %}
+                                <option value="{{ m.val }}" {% if filters.end_month == m.val|stringformat:'s' %}selected{% endif %}>{{ m.label }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold">Faculty Name</label>
                             <input type="text" name="faculty_name" class="form-control form-control-sm"
                                    placeholder="Search..." value="{{ filters.faculty_name }}">
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold">Type</label>
                             <select name="type" class="form-select form-select-sm">
                                 <option value="">All Types</option>
@@ -35,7 +53,7 @@
                                 {% endfor %}
                             </select>
                         </div>
-                        <div class="col-md-3">
+                        <div class="col-md-2">
                             <label class="form-label small fw-semibold">Indexed In</label>
                             <div class="d-flex flex-wrap gap-2 mt-1">
                                 {% for val, label in indexed_choices %}

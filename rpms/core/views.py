@@ -1,6 +1,7 @@
 import json
 import csv
 import io
+import re
 from datetime import date
 
 from django.shortcuts import render, redirect, get_object_or_404
@@ -60,6 +61,35 @@ def register_view(request):
 def _get_publications(request):
     """Return all publications for all authenticated users."""
     return Publication.objects.select_related('faculty', 'faculty__user').all()
+
+def extract_month(date_str):
+    if not date_str:
+        return None
+    date_str = str(date_str).lower()
+    
+    # DD/MM/YYYY
+    match = re.search(r'\d{1,2}/(\d{1,2})/\d{4}', date_str)
+    if match:
+        try:
+            m = int(match.group(1))
+            if 1 <= m <= 12: return m
+        except: pass
+        
+    # YYYY-MM-DD or YYYY-MM
+    match = re.search(r'\d{4}-(\d{1,2})', date_str)
+    if match:
+        try:
+            m = int(match.group(1))
+            if 1 <= m <= 12: return m
+        except: pass
+        
+    # Month name
+    months = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec']
+    for i, m in enumerate(months, 1):
+        if m in date_str:
+            return i
+            
+    return None
 
 
 # ──────────────────────────────────────
@@ -123,6 +153,8 @@ def publication_list(request):
     journal = request.GET.get('journal', '').strip()
     pub_type = request.GET.get('type', '')
     quartile = request.GET.get('quartile', '')
+    start_month = request.GET.get('start_month', '')
+    end_month = request.GET.get('end_month', '')
 
     if faculty_name:
         pubs = pubs.filter(faculty_name__icontains=faculty_name)
@@ -139,12 +171,28 @@ def publication_list(request):
     if quartile:
         pubs = pubs.filter(quartile=quartile)
 
+    if start_month or end_month:
+        try:
+            sm = int(start_month) if start_month else 1
+            em = int(end_month) if end_month else 12
+        except ValueError:
+            sm, em = 1, 12
+            
+        filtered_pubs = []
+        for p in pubs:
+            m = extract_month(p.publication_date)
+            if m is not None:
+                if sm <= m <= em:
+                    filtered_pubs.append(p)
+        pubs = filtered_pubs
+
     context = {
         'publications': pubs,
         'total_count': total_count,
-        'filtered_count': pubs.count(),
+        'filtered_count': len(pubs),
         'filters': request.GET,
         'years': list(range(2018, 2025)),
+        'months': [{'val': i, 'label': date(2000, i, 1).strftime('%B')} for i in range(1, 13)],
         'indexed_choices': INDEXED_CHOICES,
         'type_choices': TYPE_CHOICES,
         'quartile_choices': QUARTILE_CHOICES,
@@ -386,6 +434,8 @@ def export_page(request):
     faculty_name = request.GET.get('faculty_name', '').strip()
     indexed_list = request.GET.getlist('indexed')
     pub_type = request.GET.get('type', '')
+    start_month = request.GET.get('start_month', '')
+    end_month = request.GET.get('end_month', '')
 
     if year:
         pubs = pubs.filter(year=int(year))
@@ -396,12 +446,28 @@ def export_page(request):
     if pub_type:
         pubs = pubs.filter(type=pub_type)
 
+    if start_month or end_month:
+        try:
+            sm = int(start_month) if start_month else 1
+            em = int(end_month) if end_month else 12
+        except ValueError:
+            sm, em = 1, 12
+            
+        filtered_pubs = []
+        for p in pubs:
+            m = extract_month(p.publication_date)
+            if m is not None:
+                if sm <= m <= em:
+                    filtered_pubs.append(p)
+        pubs = filtered_pubs
+
     context = {
         'publications': pubs,
         'total_count': total_count,
-        'filtered_count': pubs.count(),
+        'filtered_count': len(pubs),
         'filters': request.GET,
         'years': list(range(2018, 2025)),
+        'months': [{'val': i, 'label': date(2000, i, 1).strftime('%B')} for i in range(1, 13)],
         'indexed_choices': INDEXED_CHOICES,
         'type_choices': TYPE_CHOICES,
     }
@@ -417,6 +483,8 @@ def export_download(request):
     faculty_name = request.GET.get('faculty_name', '').strip()
     indexed_list = request.GET.getlist('indexed')
     pub_type = request.GET.get('type', '')
+    start_month = request.GET.get('start_month', '')
+    end_month = request.GET.get('end_month', '')
 
     if year:
         pubs = pubs.filter(year=int(year))
@@ -426,6 +494,21 @@ def export_download(request):
         pubs = pubs.filter(indexed__in=indexed_list)
     if pub_type:
         pubs = pubs.filter(type=pub_type)
+
+    if start_month or end_month:
+        try:
+            sm = int(start_month) if start_month else 1
+            em = int(end_month) if end_month else 12
+        except ValueError:
+            sm, em = 1, 12
+            
+        filtered_pubs = []
+        for p in pubs:
+            m = extract_month(p.publication_date)
+            if m is not None:
+                if sm <= m <= em:
+                    filtered_pubs.append(p)
+        pubs = filtered_pubs
 
     fmt = request.GET.get('format', 'csv')
     today = date.today().isoformat()
